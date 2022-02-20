@@ -1,8 +1,7 @@
-import pprint
-
-from cassandra.cluster import Cluster, Session
+from pprint import pprint
 import typing as t
 
+from cassandra.cluster import Cluster, Session
 
 keyspace: t.Final[str] = 'TestKeyspace'.lower()
 
@@ -87,7 +86,15 @@ def consistency_level(session: Session):
         consistency_level=ConsistencyLevel.QUORUM,
     )
     session.execute(query, (3, 'name3', 'login3', 'group3'))
-    pprint.pprint(get_users(session))
+    pprint(get_users(session))
+
+
+# noinspection PyShadowingNames
+def prepared_statements(session: Session):
+    stmt = session.prepare('SELECT * FROM users WHERE id=?')
+    user_ids = range(1, 4)
+    result = [session.execute(stmt, [user_id]).one() for user_id in user_ids]
+    pprint(result)
 
 
 if __name__ == '__main__':
@@ -95,3 +102,4 @@ if __name__ == '__main__':
     execute_queries(session)
     async_queries(session)
     consistency_level(session)
+    prepared_statements(session)
