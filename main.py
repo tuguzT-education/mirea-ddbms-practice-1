@@ -1,3 +1,5 @@
+import pprint
+
 from cassandra.cluster import Cluster, Session
 import typing as t
 
@@ -76,7 +78,20 @@ def async_queries_callback(session: Session):
     future.add_callbacks(handle_success, handle_error)
 
 
+# noinspection PyShadowingNames
+def consistency_level(session: Session):
+    from cassandra import ConsistencyLevel
+    from cassandra.query import SimpleStatement
+    query = SimpleStatement(
+        'INSERT INTO users (id, name, login, group) VALUES (%s, %s, %s, %s)',
+        consistency_level=ConsistencyLevel.QUORUM,
+    )
+    session.execute(query, (3, 'name3', 'login3', 'group3'))
+    pprint.pprint(get_users(session))
+
+
 if __name__ == '__main__':
     session: t.Final[Session] = create_session()
     execute_queries(session)
-    async_queries_callback(session)
+    async_queries(session)
+    consistency_level(session)
