@@ -47,6 +47,36 @@ def execute_queries(session: Session):
     print(result)
 
 
+# noinspection PyShadowingNames
+def async_queries(session: Session):
+    from cassandra import ReadTimeout
+
+    future = session.execute_async('SELECT * FROM users')
+    try:
+        rows = future.result()
+        for user in rows:
+            print(user.name, user.group)
+    except ReadTimeout:
+        print('ERROR: query timed out')
+
+
+# noinspection PyShadowingNames
+def async_queries_callback(session: Session):
+    def handle_success(rows):
+        try:
+            for user in rows:
+                print(user.name, user.group)
+        except Exception as exception:
+            print(f'ERROR: {exception}')
+
+    def handle_error(exception):
+        print(f'Failed to fetch user info: {exception}')
+
+    future = session.execute_async('SELECT * FROM users')
+    future.add_callbacks(handle_success, handle_error)
+
+
 if __name__ == '__main__':
     session: t.Final[Session] = create_session()
     execute_queries(session)
+    async_queries_callback(session)
